@@ -72,7 +72,6 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
       const emailIdx = getColumnIndex(['email', 'email_address', 'mail']);
       const phoneIdx = getColumnIndex(['phoneno', 'phone_no', 'phone', 'mobile', 'contact']);
       const sourceIdx = getColumnIndex(['source', 'lead_source', 'origin']);
-      const notesIdx = getColumnIndex(['notes', 'note', 'remarks', 'comments']);
 
       // Process data rows
       const dataRows = lines.slice(1).filter(line => line.trim());
@@ -89,8 +88,7 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
             last_name: lastNameIdx !== -1 ? (columns[lastNameIdx] || '') : '',
             email: emailIdx !== -1 ? (columns[emailIdx] || '') : `unknown_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`,
             phone_no: phoneIdx !== -1 ? (columns[phoneIdx] || '') : '',
-            source: sourceIdx !== -1 ? (columns[sourceIdx] || '') : 'CSV Import',
-            notes: notesIdx !== -1 ? (columns[notesIdx] || '') : null
+            source: sourceIdx !== -1 ? (columns[sourceIdx] || '') : 'CSV Import'
           });
         }
       }
@@ -100,37 +98,11 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
       }
 
       // Insert data into Supabase
-      let insertError = null as any;
-      try {
-        const resp = await supabase
-          .from('sales_representatives')
-          .insert(clientsData);
-        insertError = resp.error;
-        if (insertError) throw insertError;
-      } catch (err: any) {
-        // If the schema doesn't have 'notes' yet, retry without notes
-        const msg = err?.message?.toLowerCase?.() || '';
-        const code = err?.code || '';
-        const mentionsNotes = msg.includes("notes") || msg.includes("column") || msg.includes("schema");
-        if (code === 'PGRST204' && mentionsNotes) {
-          const clientsDataWithoutNotes = clientsData.map((c: any) => {
-            const { notes, ...rest } = c;
-            return rest;
-          });
-          const retry = await supabase
-            .from('sales_representatives')
-            .insert(clientsDataWithoutNotes);
-          if (retry.error) {
-            throw retry.error;
-          }
-          toast({
-            title: 'Uploaded without notes',
-            description: 'Notes column not found in database yet. Data was uploaded without notes. Please apply the migration and try again for notes.',
-          });
-        } else {
-          throw err;
-        }
-      }
+      const { error } = await supabase
+        .from('sales_representatives')
+        .insert(clientsData);
+
+      if (error) throw error;
 
       // Fire n8n webhook for each imported row (non-blocking for overall UX)
       try {
@@ -139,7 +111,7 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
           lastName: c.last_name,
           email: c.email,
           phoneNo: c.phone_no,
-          notes: c.notes ?? ''
+          notes: '' // Always empty since notes column doesn't exist
         }));
         const results = await Promise.allSettled(webhookPayloads.map(p => processClient(p)));
         const successCount = results.filter(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<any>).value?.success).length;
