@@ -20,7 +20,6 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [companyName, setCompanyName] = useState('');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -72,7 +71,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await signUp(email, password, displayName, companyName);
+      const { error } = await signUp(email, password, displayName);
       
       if (error) {
         let errorMessage = 'Failed to create account. Please try again.';
@@ -113,7 +112,6 @@ const Auth = () => {
     setEmail('');
     setPassword('');
     setDisplayName('');
-    setCompanyName('');
   };
 
   return (
@@ -173,25 +171,14 @@ const Auth = () => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    type="text"
-                    placeholder="Enter your company name"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name (Optional)</Label>
+                  <Label htmlFor="displayName">Name</Label>
                   <Input
                     id="displayName"
                     type="text"
-                    placeholder="Enter your display name"
+                    placeholder="Enter your name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
+                    required
                     disabled={loading}
                   />
                 </div>

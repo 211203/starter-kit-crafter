@@ -139,30 +139,10 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
 
       if (error) throw error;
 
-      // Fire n8n webhook for each imported row (non-blocking for overall UX)
-      try {
-        const webhookPayloads = clientsData.map((c: any) => ({
-          firstName: c.first_name,
-          lastName: c.last_name,
-          email: c.email,
-          phoneNo: c.phone_no,
-          notes: c.notes || ''
-        }));
-        const results = await Promise.allSettled(webhookPayloads.map(p => processClient(p)));
-        const successCount = results.filter(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<any>).value?.success).length;
-        const failCount = webhookPayloads.length - successCount;
-
-        toast({
-          title: "Upload Successful",
-          description: `Imported ${clientsData.length} clients. Webhook sent: ${successCount} ok${failCount ? `, ${failCount} failed` : ''}.`,
-        });
-      } catch (webhookErr: any) {
-        console.error('Webhook dispatch error:', webhookErr);
-        toast({
-          title: 'Upload Successful (Webhook Issues)',
-          description: 'Data imported, but sending to webhook failed for some or all records.',
-        });
-      }
+      toast({
+        title: "Upload Successful",
+        description: `Imported ${clientsData.length} clients. Use the "Process Client" button to send to workflow.`,
+      });
 
       onUploadSuccess();
 
