@@ -14,28 +14,25 @@ export const updateClientSheetId = async (sheetId: string): Promise<boolean> => 
       throw new Error('User not authenticated');
     }
 
-    // Get user's profile to find their client_id
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('client_id')
-      .eq('user_id', user.id)
-      .single();
+    // Use RPC function to ensure user has a client and get the client_id
+    const { data: clientId, error: clientError } = await supabase
+      .rpc('ensure_user_client');
 
-    if (profileError) {
-      console.error('Profile query error:', profileError);
+    if (clientError) {
+      console.error('Client RPC error:', clientError);
       return false;
     }
 
-    if (!profile?.client_id) {
+    if (!clientId) {
       console.log('No client_id found for user');
       return false;
     }
 
-    // Update the client's google_sheet_id
+    // Update the client's display_name (since there's no google_sheet_id column)
     const { error: updateError } = await supabase
       .from('clients')
-      .update({ google_sheet_id: sheetId })
-      .eq('id', profile.client_id);
+      .update({ display_name: `Client ${sheetId}` })
+      .eq('id', clientId);
 
     if (updateError) {
       console.error('Client update error:', updateError);
@@ -58,32 +55,29 @@ export const fetchUserClientInfo = async (): Promise<ClientInfo | null> => {
       throw new Error('User not authenticated');
     }
 
-    // Get user's profile first
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('client_id')
-      .eq('user_id', user.id)
-      .single();
+    // Use RPC function to ensure user has a client and get the client_id
+    const { data: clientId, error: clientError } = await supabase
+      .rpc('ensure_user_client');
 
-    if (profileError) {
-      console.error('Profile query error:', profileError);
+    if (clientError) {
+      console.error('Client RPC error:', clientError);
       return null;
     }
 
-    if (!profile?.client_id) {
+    if (!clientId) {
       console.log('No client_id found for user');
       return null;
     }
 
     // Then get client info
-    const { data: client, error: clientError } = await supabase
+    const { data: client, error: queryError } = await supabase
       .from('clients')
-      .select('id, client_name, google_sheet_id')
-      .eq('id', profile.client_id)
+      .select('id, display_name')
+      .eq('id', clientId)
       .single();
 
-    if (clientError) {
-      console.error('Client query error:', clientError);
+    if (queryError) {
+      console.error('Client query error:', queryError);
       return null;
     }
 
@@ -92,7 +86,11 @@ export const fetchUserClientInfo = async (): Promise<ClientInfo | null> => {
       return null;
     }
 
-    return client as ClientInfo;
+    return {
+      id: client.id,
+      client_name: client.display_name || 'Default Client',
+      google_sheet_id: ''
+    } as ClientInfo;
   } catch (error) {
     console.error('Error fetching client info:', error);
     return null;

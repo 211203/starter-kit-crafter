@@ -31,13 +31,13 @@ const mapToDb = (client: SalesClient) => ({
 export const getCurrentClientId = async (): Promise<string | null> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('client_id')
-    .eq('user_id', user.id)
-    .maybeSingle();
+  
+  // Use RPC function to ensure user has a client and get the client_id
+  const { data: clientId, error } = await supabase
+    .rpc('ensure_user_client');
+    
   if (error) throw error;
-  return data?.client_id ?? null;
+  return clientId || null;
 };
 
 export const getSalesClients = async (): Promise<SalesClient[]> => {
