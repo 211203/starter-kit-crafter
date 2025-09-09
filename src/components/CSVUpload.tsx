@@ -72,6 +72,7 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
       const emailIdx = getColumnIndex(['email', 'email_address', 'mail']);
       const phoneIdx = getColumnIndex(['phoneno', 'phone_no', 'phone', 'mobile', 'contact']);
       const sourceIdx = getColumnIndex(['source', 'lead_source', 'origin']);
+      const notesIdx = getColumnIndex(['notes', 'note', 'remarks', 'comments', 'description']);
 
       // Process data rows
       const dataRows = lines.slice(1).filter(line => line.trim());
@@ -88,7 +89,8 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
             last_name: lastNameIdx !== -1 ? (columns[lastNameIdx] || '') : '',
             email: emailIdx !== -1 ? (columns[emailIdx] || '') : `unknown_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`,
             phone_no: phoneIdx !== -1 ? (columns[phoneIdx] || '') : '',
-            source: sourceIdx !== -1 ? (columns[sourceIdx] || '') : 'CSV Import'
+            source: sourceIdx !== -1 ? (columns[sourceIdx] || '') : 'CSV Import',
+            notes: notesIdx !== -1 ? (columns[notesIdx] || '') : ''
           });
         }
       }
@@ -111,7 +113,7 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
           lastName: c.last_name,
           email: c.email,
           phoneNo: c.phone_no,
-          notes: '' // Always empty since notes column doesn't exist
+          notes: c.notes || ''
         }));
         const results = await Promise.allSettled(webhookPayloads.map(p => processClient(p)));
         const successCount = results.filter(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<any>).value?.success).length;

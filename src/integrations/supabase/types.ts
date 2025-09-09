@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      clients: {
+      client_data: {
         Row: {
           client_name: string
           created_at: string
@@ -38,7 +38,7 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
+      clients: {
         Row: {
           client_id: string | null
           created_at: string
@@ -68,7 +68,7 @@ export type Database = {
             foreignKeyName: "profiles_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "client_data"
             referencedColumns: ["id"]
           },
         ]
@@ -76,7 +76,6 @@ export type Database = {
       sales_representatives: {
         Row: {
           created_at: string
-          client_id: string | null
           email: string
           first_name: string
           id: string
@@ -89,7 +88,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          client_id?: string | null
           email: string
           first_name: string
           id?: string
@@ -102,7 +100,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          client_id?: string | null
           email?: string
           first_name?: string
           id?: string
@@ -125,7 +122,7 @@ export type Database = {
         Returns: string
       }
       ensure_user_client: {
-        Args: { p_client_name?: string | null; p_google_sheet_id?: string | null }
+        Args: { p_client_name?: string; p_google_sheet_id?: string }
         Returns: string
       }
     }
