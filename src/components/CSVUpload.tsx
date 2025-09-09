@@ -52,7 +52,40 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
       // Parse CSV and insert data
       const text = await file.text();
       const lines = text.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      
+      // Improved CSV parsing to handle quoted fields
+      const parseCSVLine = (line: string): string[] => {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+              // Handle escaped quotes
+              current += '"';
+              i++; // Skip next quote
+            } else {
+              // Toggle quote mode
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            // End of field
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        
+        // Add the last field
+        result.push(current.trim());
+        return result;
+      };
+      
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/"/g, ''));
       
       // Find column indices - try multiple variations, return -1 if not found
       const getColumnIndex = (columnVariations: string[]) => {
@@ -79,7 +112,7 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
       const clientsData = [];
 
       for (const line of dataRows) {
-        const columns = line.split(',').map(c => c.trim().replace(/"/g, ''));
+        const columns = parseCSVLine(line).map(c => c.replace(/"/g, ''));
         
         // Accept any row with at least some data
         if (columns.some(col => col.length > 0)) {
