@@ -73,12 +73,58 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          phone_no: string
+          sales_rep_id: string | null
+          sales_rep_user_id: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          phone_no: string
+          sales_rep_id?: string | null
+          sales_rep_user_id: string
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          phone_no?: string
+          sales_rep_id?: string | null
+          sales_rep_user_id?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           client_id: string | null
           created_at: string
           display_name: string | null
           id: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           user_id: string
         }
@@ -87,6 +133,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           user_id: string
         }
@@ -95,6 +142,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           user_id?: string
         }
@@ -108,40 +156,40 @@ export type Database = {
           },
         ]
       }
-      sales_representatives: {
+      sales_reps: {
         Row: {
+          client_id: string
           created_at: string
           email: string
           first_name: string
           id: string
           last_name: string
-          notes: string | null
-          phone_no: string
-          source: string
+          phone_no: string | null
+          status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          client_id: string
           created_at?: string
           email: string
           first_name: string
           id?: string
           last_name: string
-          notes?: string | null
-          phone_no: string
-          source: string
+          phone_no?: string | null
+          status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          client_id?: string
           created_at?: string
           email?: string
           first_name?: string
           id?: string
           last_name?: string
-          notes?: string | null
-          phone_no?: string
-          source?: string
+          phone_no?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -160,9 +208,17 @@ export type Database = {
         Args: { p_client_name?: string; p_google_sheet_id?: string }
         Returns: string
       }
+      get_user_client_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "client_admin" | "sales_rep"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -289,6 +345,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["client_admin", "sales_rep"],
+    },
   },
 } as const
