@@ -1,93 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { SalesTable } from '@/components/SalesTable';
-import { DashboardHeader } from '@/components/DashboardHeader';
-import { CSVUpload } from '@/components/CSVUpload';
-import { SalesClient } from '@/types/sales';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import React from 'react';
+import { useRole } from '@/contexts/RoleContext';
+import { ClientAdminDashboard } from '@/components/ClientAdminDashboard';
+import { SalesRepDashboard } from '@/components/SalesRepDashboard';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const [clients, setClients] = useState<SalesClient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const { userRole, loading } = useRole();
 
-  const loadData = async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('sales_representatives')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dashboard-bg flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-      if (error) throw error;
-      
-      // Transform data to match SalesClient interface
-      const transformedData = data?.map(client => ({
-        id: client.id,
-        user_id: client.user_id,
-        firstName: client.first_name,
-        lastName: client.last_name,
-        email: client.email,
-        phoneNo: client.phone_no,
-        source: client.source,
-        notes: client.notes ?? null,
-        created_at: client.created_at,
-        updated_at: client.updated_at
-      })) || [];
-      
-      setClients(transformedData);
-    } catch (error) {
-      console.error('Error loading sales data:', error);
-      toast({
-        title: "Error Loading Data",
-        description: "Failed to load sales data. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (userRole === 'client_admin') {
+    return <ClientAdminDashboard />;
+  }
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const handleRefresh = () => {
-    loadData();
-  };
+  if (userRole === 'sales_rep') {
+    return <SalesRepDashboard />;
+  }
 
   return (
-    <div className="min-h-screen bg-dashboard-bg">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="bg-card rounded-xl border border-border shadow-xl p-8">
-          <DashboardHeader
-            onRefresh={handleRefresh}
-            clientCount={clients.length}
-            isLoading={loading}
-          />
-          
-          {clients.length === 0 && !loading && (
-            <div className="mt-8">
-              <CSVUpload onUploadSuccess={loadData} />
-            </div>
-          )}
-          
-          <div className="mt-8">
-            <SalesTable data={clients} loading={loading} onDataChange={loadData} />
-          </div>
-        </div>
+    <div className="min-h-screen bg-dashboard-bg flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-primary mb-2">Access Denied</h1>
+        <p className="text-muted-foreground">Unable to determine your role. Please contact support.</p>
       </div>
     </div>
   );

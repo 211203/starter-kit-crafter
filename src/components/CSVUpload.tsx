@@ -134,7 +134,7 @@ export const CSVUpload = ({ onUploadSuccess }: CSVUploadProps) => {
 
       // Insert data into Supabase
       const { error } = await supabase
-        .from('sales_representatives')
+        .from('customers')
         .insert(clientsData);
 
       if (error) throw error;

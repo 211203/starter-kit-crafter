@@ -4,27 +4,27 @@ import { SalesClient } from '@/types/sales';
 // Map DB row (snake_case) to app type (camelCase)
 const mapFromDb = (row: any): SalesClient => ({
   id: row.id,
-  user_id: row.user_id,
+  user_id: row.sales_rep_user_id,
   firstName: row.first_name,
   lastName: row.last_name,
   email: row.email,
   phoneNo: row.phone_no,
   source: row.source,
-  notes: row.notes ?? null,
+  notes: row.notes,
   created_at: row.created_at,
   updated_at: row.updated_at,
 });
 
 // Map app type to DB row for insert/upsert
 const mapToDb = (client: SalesClient) => ({
-  // id will be auto if not provided
-  user_id: client.user_id ?? undefined, // trigger will set to auth.uid() if null
+  id: client.id,
+  sales_rep_user_id: client.user_id,
   first_name: client.firstName,
   last_name: client.lastName,
   email: client.email,
   phone_no: client.phoneNo,
   source: client.source,
-  notes: client.notes ?? null,
+  notes: client.notes,
 });
 
 // Fetch the current tenant's client_id from the user's profile
@@ -42,8 +42,8 @@ export const getCurrentClientId = async (): Promise<string | null> => {
 
 export const getSalesClients = async (): Promise<SalesClient[]> => {
   const { data, error } = await supabase
-    .from('sales_representatives')
-    .select('id, user_id, first_name, last_name, email, phone_no, source, notes, created_at, updated_at')
+    .from('customers')
+    .select('id, sales_rep_user_id, first_name, last_name, email, phone_no, source, notes, created_at, updated_at')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -53,16 +53,17 @@ export const getSalesClients = async (): Promise<SalesClient[]> => {
 export const upsertSalesClients = async (clients: SalesClient[]) => {
   if (!clients.length) return { count: 0 };
 
-  const clientId = await getCurrentClientId();
-  if (!clientId) throw new Error('No client_id associated with the current user');
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error('User not authenticated');
 
-  const payload = clients.map(c => ({ ...mapToDb(c), client_id: clientId }));
+  const payload = clients.map(c => ({ 
+    ...mapToDb(c), 
+    sales_rep_user_id: userData.user.id 
+  }));
+  
   const { error, count } = await supabase
-    .from('sales_representatives')
-    // Match the DB unique index (client_id, email) so upsert works per-tenant
-    .upsert(payload, { onConflict: 'client_id,email', ignoreDuplicates: false, count: 'exact' });
-  // Note: If you want a composite uniqueness (e.g., by email within tenant),
-  // add a unique index in DB: unique (client_id, email)
+    .from('customers')
+    .upsert(payload, { onConflict: 'sales_rep_user_id,email', ignoreDuplicates: false, count: 'exact' });
 
   if (error) throw error;
   return { count: count ?? clients.length };
@@ -70,12 +71,19 @@ export const upsertSalesClients = async (clients: SalesClient[]) => {
 
 export const insertSalesClients = async (clients: SalesClient[]) => {
   if (!clients.length) return { count: 0 };
-  const clientId = await getCurrentClientId();
-  if (!clientId) throw new Error('No client_id associated with the current user');
-  const payload = clients.map(c => ({ ...mapToDb(c), client_id: clientId }));
+  
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error('User not authenticated');
+  
+  const payload = clients.map(c => ({ 
+    ...mapToDb(c), 
+    sales_rep_user_id: userData.user.id 
+  }));
+  
   const { error, count } = await supabase
-    .from('sales_representatives')
+    .from('customers')
     .insert(payload, { count: 'exact' });
+    
   if (error) throw error;
   return { count: count ?? clients.length };
 };
