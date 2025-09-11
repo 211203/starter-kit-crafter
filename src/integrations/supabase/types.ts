@@ -137,10 +137,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_client_id_fkey1"
+            foreignKeyName: "profiles_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "user_client_mapping"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
