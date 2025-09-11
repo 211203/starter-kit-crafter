@@ -3,10 +3,16 @@ import { UserProfile, UserRole } from '@/types/auth';
 
 export const getUserProfile = async (): Promise<UserProfile | null> => {
   try {
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+    if (!userId) {
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+      .eq('user_id', userId)
       .single();
 
     if (error) {
