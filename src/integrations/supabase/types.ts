@@ -40,38 +40,27 @@ export type Database = {
       }
       clients: {
         Row: {
-          client_id: string | null
+          client_name: string
           created_at: string
-          display_name: string | null
+          google_sheet_id: string | null
           id: string
           updated_at: string
-          user_id: string
         }
         Insert: {
-          client_id?: string | null
+          client_name: string
           created_at?: string
-          display_name?: string | null
+          google_sheet_id?: string | null
           id?: string
           updated_at?: string
-          user_id: string
         }
         Update: {
-          client_id?: string | null
+          client_name?: string
           created_at?: string
-          display_name?: string | null
+          google_sheet_id?: string | null
           id?: string
           updated_at?: string
-          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "client_data"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       customers: {
         Row: {
@@ -151,7 +140,7 @@ export type Database = {
             foreignKeyName: "profiles_client_id_fkey1"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "user_client_mapping"
             referencedColumns: ["id"]
           },
         ]
@@ -194,6 +183,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_client_mapping: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
