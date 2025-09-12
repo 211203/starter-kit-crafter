@@ -2,4 +2,4 @@ project_id = "zwhtgerardkbjvjmruvt"
 
 [functions]
 [functions.invite-sales-rep]
-verify_jwt = true
+verify_jwt = false

@@ -8,6 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 type InvitePayload = {
@@ -186,6 +187,20 @@ serve(async (req) => {
         JSON.stringify({ success: false, message: "Failed to resolve user" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Ensure a profile exists for the sales rep and link to the client's tenant
+    const { error: profileUpsertErr } = await supabaseAdmin.from("profiles").upsert(
+      {
+        user_id: salesUser.id,
+        role: "sales_rep",
+        display_name: `${first_name} ${last_name}`,
+        client_id: clientId,
+      },
+      { onConflict: "user_id" }
+    );
+    if (profileUpsertErr) {
+      console.warn("profile upsert error", profileUpsertErr);
     }
 
     // Upsert sales_reps record for this client + email

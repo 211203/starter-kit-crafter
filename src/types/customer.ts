@@ -9,6 +9,7 @@ export interface Customer {
   phone_no: string;
   source: string;
   notes?: string | null;
+  status?: string; // optional workflow status: pending|active|won|lost
   created_at?: string;
   updated_at?: string;
 }
