@@ -28,10 +28,10 @@ export const updateClientSheetId = async (sheetId: string): Promise<boolean> => 
       return false;
     }
 
-    // Update the client's display_name (since there's no google_sheet_id column)
+    // Update the client's Google Sheet ID
     const { error: updateError } = await supabase
       .from('clients')
-      .update({ display_name: `Client ${sheetId}` })
+      .update({ google_sheet_id: sheetId })
       .eq('id', clientId);
 
     if (updateError) {
@@ -72,7 +72,7 @@ export const fetchUserClientInfo = async (): Promise<ClientInfo | null> => {
     // Then get client info
     const { data: client, error: queryError } = await supabase
       .from('clients')
-      .select('id, display_name')
+      .select('id, client_name, google_sheet_id')
       .eq('id', clientId)
       .single();
 
@@ -88,8 +88,8 @@ export const fetchUserClientInfo = async (): Promise<ClientInfo | null> => {
 
     return {
       id: client.id,
-      client_name: client.display_name || 'Default Client',
-      google_sheet_id: ''
+      client_name: client.client_name || 'My Company',
+      google_sheet_id: client.google_sheet_id || ''
     } as ClientInfo;
   } catch (error) {
     console.error('Error fetching client info:', error);

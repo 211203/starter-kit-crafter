@@ -24,7 +24,7 @@ export const getAvailableClients = async () => {
     const { data, error } = await supabase
       .from('clients')
       .select('*')
-      .order('display_name');
+      .order('client_name');
     
     if (error) {
       throw error;

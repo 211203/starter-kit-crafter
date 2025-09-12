@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { SalesRep, CreateSalesRepRequest } from '@/types/salesRep';
-import { getUserClientId } from './authService';
 
 export const getSalesReps = async (): Promise<SalesRep[]> => {
   try {
@@ -23,42 +22,19 @@ export const getSalesReps = async (): Promise<SalesRep[]> => {
 
 export const inviteSalesRep = async (salesRepData: CreateSalesRepRequest): Promise<{ success: boolean; message?: string }> => {
   try {
-    const clientId = await getUserClientId();
-    if (!clientId) {
-      return { success: false, message: 'No client ID found' };
-    }
-
-    // First, create the user account
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: salesRepData.email,
-      password: 'TempPass123!', // Generate a temporary password
-      email_confirm: true,
-      user_metadata: {
-        display_name: `${salesRepData.first_name} ${salesRepData.last_name}`,
-        role: 'sales_rep'
-      }
-    });
-
-    if (authError) {
-      console.error('Error creating user:', authError);
-      return { success: false, message: 'Failed to create user account' };
-    }
-
-    // Then create the sales rep record
-    const { error: repError } = await supabase
-      .from('sales_reps')
-      .insert({
-        user_id: authData.user.id,
-        client_id: clientId,
+    // Use Edge Function with service role to handle privileged invite flow
+    const { data, error } = await supabase.functions.invoke('invite-sales-rep', {
+      body: {
         first_name: salesRepData.first_name,
         last_name: salesRepData.last_name,
         email: salesRepData.email,
-        phone_no: salesRepData.phone_no
-      });
+        phone_no: salesRepData.phone_no,
+      },
+    });
 
-    if (repError) {
-      console.error('Error creating sales rep:', repError);
-      return { success: false, message: 'Failed to create sales rep record' };
+    if (error || !data?.success) {
+      console.error('Error inviting sales rep via function:', error || data);
+      return { success: false, message: data?.message || 'Failed to invite sales rep' };
     }
 
     return { success: true };
