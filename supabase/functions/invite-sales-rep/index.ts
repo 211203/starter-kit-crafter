@@ -42,8 +42,8 @@ serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://zwhtgerardkbjvjmruvt.supabase.co";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3aHRnZXJhcmRrYmp2am1ydXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzAwNDIsImV4cCI6MjA3MTcwNjA0Mn0.wHJ_Ux7K39hYmNKZx1J6Ei16aHWinFfq1ORMpRr4V-A";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !anonKey || !serviceKey) {
@@ -142,9 +142,13 @@ serve(async (req) => {
 
     if (!salesUser) {
       // Prefer invite flow so the user sets their own password
+      const siteUrl = Deno.env.get("SUPABASE_SITE_URL") || "https://id-preview--057b4366-c50a-4d05-8f86-47decf151b3f.lovable.app";
       const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
         email,
-        { data: { role: "sales_rep", display_name: `${first_name} ${last_name}` } as any }
+        { 
+          data: { role: "sales_rep", display_name: `${first_name} ${last_name}` },
+          redirectTo: `${siteUrl}/accept-invite` 
+        }
       );
 
       if (inviteError) {
